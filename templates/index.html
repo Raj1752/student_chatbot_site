@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>School Chatbot</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+        #box { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        input { width: 80%; padding: 10px; }
+        button { padding: 10px; }
+        #response { margin-top: 20px; font-size: 18px; }
+    </style>
+</head>
+
+<body>
+<div id="box">
+    <h2>🤖 School Chatbot</h2>
+
+    <input id="userInput" placeholder="Ask me something..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <p id="response"></p>
+</div>
+
+<script>
+function sendMessage() {
+    let message = document.getElementById("userInput").value;
+
+    fetch("/ask", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({question: message})
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("response").innerText = data.answer;
+    })
+}
+</script>
+</body>
+</html>
