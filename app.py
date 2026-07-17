@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from chatbot import get_response
+from rag_engine import get_rag_response as get_response
 
 app = Flask(__name__)
 
