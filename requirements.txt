@@ -1,8 +1,7 @@
 Flask
 gunicorn
-nltk
-sentence-transformers
-faiss-cpu
-pdfplumber
 numpy
-
+pdfplumber
+onnxruntime
+tokenizers
+huggingface-hub
