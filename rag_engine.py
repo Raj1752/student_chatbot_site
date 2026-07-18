@@ -99,11 +99,22 @@ def get_rag_response(user_input):
 
     scores = np.dot(chunk_vectors, q_vec)
     best = int(np.argmax(scores))
+
     if scores[best] >= THRESHOLD:
+        sentences = re.split(r'(?<=[.!?])\s+', chunks[best])
+
+        for sentence in sentences:
+            if any(
+                word.lower() in sentence.lower()
+                for word in user_input.split()
+            ):
+                return sentence
+
         return chunks[best]
 
     faq_scores = np.dot(faq_vectors, q_vec)
     best_faq = int(np.argmax(faq_scores))
+
     if faq_scores[best_faq] >= THRESHOLD:
         return faq_answers[best_faq]
 
