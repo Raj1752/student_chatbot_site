@@ -1,6 +1,7 @@
 import numpy as np
 import pdfplumber
 import json
+import re
 from huggingface_hub import hf_hub_download
 from tokenizers import Tokenizer
 import onnxruntime as ort
