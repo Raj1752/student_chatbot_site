@@ -97,20 +97,17 @@ THRESHOLD = 0.45
 def get_rag_response(user_input):
     q_vec = embed([user_input])[0]
 
-    scores = np.dot(chunk_vectors, q_vec)
-    best = int(np.argmax(scores))
+    chunk_scores = np.dot(chunk_vectors, q_vec)
+    best = int(np.argmax(chunk_scores))
 
-    if scores[best] >= THRESHOLD:
+    if chunk_scores[best] >= THRESHOLD:
         sentences = re.split(r'(?<=[.!?])\s+', chunks[best])
 
-        for sentence in sentences:
-            if any(
-                word.lower() in sentence.lower()
-                for word in user_input.split()
-            ):
-                return sentence
+        sentence_vectors = embed(sentences)
+        sentence_scores = np.dot(sentence_vectors, q_vec)
 
-        return chunks[best]
+        best_sentence = int(np.argmax(sentence_scores))
+        return sentences[best_sentence]
 
     faq_scores = np.dot(faq_vectors, q_vec)
     best_faq = int(np.argmax(faq_scores))
@@ -119,3 +116,4 @@ def get_rag_response(user_input):
         return faq_answers[best_faq]
 
     return "I couldn't find that in the university documents. Please contact the student support office."
+    
