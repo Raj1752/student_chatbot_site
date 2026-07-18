@@ -51,7 +51,7 @@ def load_pdf_text(path="university_docs.pdf"):
     return text
 
 # ---- Cut into slices ----
-def chunk_text(text, size=300, overlap=50):
+def chunk_text(text, size=1000, overlap=200):
     chunks = []
     start = 0
     while start < len(text):
