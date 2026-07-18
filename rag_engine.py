@@ -51,16 +51,32 @@ def load_pdf_text(path="university_docs.pdf"):
                 text += page_text + "\n"
     return text
 
-# ---- Cut into slices ----
-def chunk_text(text, size=1000, overlap=200):
+
+# ---- Cut into sections ----
+def chunk_text(text):
     chunks = []
-    start = 0
-    while start < len(text):
-        chunk = text[start:start + size]
-        if chunk.strip():
-            chunks.append(chunk.strip())
-        start += size - overlap
+    current_chunk = []
+
+    for line in text.split("\n"):
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if re.match(r"^\d+\.\s+[A-Z]", line):
+            if current_chunk:
+                chunks.append(" ".join(current_chunk))
+            current_chunk = [line]
+        else:
+            current_chunk.append(line)
+
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
     return chunks
+
+
+
 
 # ---- Build index at startup ----
 print("Loading handbook and building index...")
