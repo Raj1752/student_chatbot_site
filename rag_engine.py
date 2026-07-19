@@ -117,7 +117,6 @@ def get_rag_response(user_input):
         return "Please enter a question."
 
     question = user_input.lower()
-
     expanded_question = user_input
 
     illness_words = [
@@ -128,10 +127,24 @@ def get_rag_response(user_input):
         "illness"
     ]
 
+    student_id_words = [
+        "bring",
+        "student id",
+        "id card",
+        "identification",
+        "without my id"
+    ]
+
     if any(word in question for word in illness_words):
         expanded_question += (
             " illness medical certificate "
             "Registrar resit examination"
+        )
+
+    if any(word in question for word in student_id_words):
+        expanded_question += (
+            " students must bring student ID card "
+            "to every examination"
         )
 
     question_vector = embed([expanded_question])[0]
@@ -213,6 +226,18 @@ def get_rag_response(user_input):
         if match:
             return match.group(0)
 
+    # Student ID examination answer
+    if any(word in question for word in student_id_words):
+        match = re.search(
+            r"Students must bring their student ID card "
+            r"to every examination\.",
+            candidate_text,
+            re.IGNORECASE
+        )
+
+        if match:
+            return match.group(0)
+
     sentence_vectors = embed(candidate_sentences)
 
     sentence_scores = np.dot(
@@ -232,7 +257,11 @@ def get_rag_response(user_input):
         "sick",
         "medical",
         "certificate",
-        "registrar"
+        "registrar",
+        "bring",
+        "student",
+        "id",
+        "card"
     ]
 
     for i, sentence in enumerate(candidate_sentences):
