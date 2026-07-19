@@ -8,7 +8,11 @@ from tokenizers import Tokenizer
 
 
 # ============================================================
-# V10 FINAL - Lightweight RAG Engine
+# Lightweight RAG Engine (Version 10 - Final)
+#
+# This version represents the final implementation developed
+# after iterative refinement and testing throughout the project.
+#
 # Main improvements:
 # 1. Sentence embeddings are pre-computed once at startup.
 # 2. Section headings are removed from final answers.
