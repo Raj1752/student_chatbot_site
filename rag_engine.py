@@ -113,7 +113,7 @@ raw_text = load_pdf_text()
 chunks = chunk_text(raw_text)
 chunk_vectors = embed(chunks)
 
-THRESHOLD = 0.45
+THRESHOLD = 0.60
 
 
 # ---- Answer question ----
