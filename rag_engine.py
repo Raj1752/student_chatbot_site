@@ -5,6 +5,7 @@ from huggingface_hub import hf_hub_download
 from tokenizers import Tokenizer
 import onnxruntime as ort
 
+
 print("Downloading lightweight model...")
 
 model_path = hf_hub_download(
@@ -38,8 +39,8 @@ def embed(texts):
             {
                 "input_ids": input_ids,
                 "attention_mask": attention_mask,
-                "token_type_ids": token_type_ids,
-            },
+                "token_type_ids": token_type_ids
+            }
         )
 
         token_embeddings = outputs[0][0]
@@ -48,6 +49,7 @@ def embed(texts):
         vector = (token_embeddings * mask).sum(axis=0) / mask.sum()
 
         norm = np.linalg.norm(vector)
+
         if norm != 0:
             vector = vector / norm
 
@@ -98,14 +100,12 @@ print("Loading handbook and building index...")
 
 raw_text = load_pdf_text()
 chunks = chunk_text(raw_text)
-
 chunk_vectors = embed(chunks)
 
 THRESHOLD = 0.45
 
 
 def get_rag_response(user_input):
-
     if not user_input.strip():
         return "Please enter a question."
 
@@ -124,7 +124,6 @@ def get_rag_response(user_input):
     candidate_sentences = []
 
     for index in top_indices:
-
         sentences = re.split(
             r"(?<=[.!?])\s+",
             chunks[index]
@@ -142,6 +141,21 @@ def get_rag_response(user_input):
         sentence_vectors,
         question_vector
     )
+
+    keywords = [
+        "semester",
+        "december",
+        "may",
+        "resit",
+        "examination"
+    ]
+
+    for i, sentence in enumerate(candidate_sentences):
+        text = sentence.lower()
+
+        for word in keywords:
+            if word in text:
+                sentence_scores[i] += 0.05
 
     best_sentence = int(np.argmax(sentence_scores))
 
