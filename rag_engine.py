@@ -31,10 +31,12 @@ def embed(texts):
         enc = tokenizer.encode(text)
 
         input_ids = np.array([enc.ids], dtype=np.int64)
+
         attention_mask = np.array(
             [enc.attention_mask],
             dtype=np.int64
         )
+
         token_type_ids = np.zeros_like(input_ids)
 
         outputs = session.run(
@@ -115,7 +117,24 @@ def get_rag_response(user_input):
         return "Please enter a question."
 
     question = user_input.lower()
-    question_vector = embed([user_input])[0]
+
+    expanded_question = user_input
+
+    illness_words = [
+        "miss",
+        "missed",
+        "sick",
+        "ill",
+        "illness"
+    ]
+
+    if any(word in question for word in illness_words):
+        expanded_question += (
+            " illness medical certificate "
+            "Registrar resit examination"
+        )
+
+    question_vector = embed([expanded_question])[0]
 
     chunk_scores = np.dot(
         chunk_vectors,
@@ -148,7 +167,7 @@ def get_rag_response(user_input):
 
     candidate_text = " ".join(candidate_sentences)
 
-    # Return only the Semester 1 answer
+    # Specific Semester 1 answer
     if "semester 1" in question:
         match = re.search(
             r"Semester 1 examinations take place in ([A-Za-z]+)",
@@ -158,12 +177,13 @@ def get_rag_response(user_input):
 
         if match:
             month = match.group(1)
+
             return (
                 "Semester 1 examinations "
                 f"take place in {month}."
             )
 
-    # Return only the Semester 2 answer
+    # Specific Semester 2 answer
     if "semester 2" in question:
         match = re.search(
             r"Semester 2 examinations take place in ([A-Za-z]+)",
@@ -173,10 +193,25 @@ def get_rag_response(user_input):
 
         if match:
             month = match.group(1)
+
             return (
                 "Semester 2 examinations "
                 f"take place in {month}."
             )
+
+    # Missed or sick examination answer
+    if any(word in question for word in illness_words):
+        match = re.search(
+            r"A student who misses an examination due to illness "
+            r"must submit a medical certificate to the Registrar's "
+            r"Office within three working days and may apply to sit "
+            r"the resit examination\.",
+            candidate_text,
+            re.IGNORECASE
+        )
+
+        if match:
+            return match.group(0)
 
     sentence_vectors = embed(candidate_sentences)
 
@@ -190,15 +225,22 @@ def get_rag_response(user_input):
         "december",
         "may",
         "resit",
-        "examination"
+        "examination",
+        "miss",
+        "misses",
+        "illness",
+        "sick",
+        "medical",
+        "certificate",
+        "registrar"
     ]
 
     for i, sentence in enumerate(candidate_sentences):
         text = sentence.lower()
 
         for word in keywords:
-            if word in text:
-                sentence_scores[i] += 0.05
+            if word in text and word in question:
+                sentence_scores[i] += 0.10
 
     best_sentence = int(
         np.argmax(sentence_scores)
