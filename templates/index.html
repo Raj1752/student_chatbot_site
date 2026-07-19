@@ -2,71 +2,104 @@
 <html>
 <head>
     <title>School Chatbot</title>
+
     <style>
-    body {
-        font-family: Arial;
-        padding: 20px;
-        background: #000000; /* black background */
-        color: #ffffff;      /* white text */
-    }
-    #box {
-        max-width: 600px;
-        margin: auto;
-        background: #1a1a1a; /* dark gray box */
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-    }
-    input {
-        width: 80%;
-        padding: 10px;
-        background: #333333;
-        color: white;
-        border: 1px solid #555;
-    }
-    button {
-        padding: 10px;
-        background: #444444;
-        color: white;
-        border: none;
-        cursor: pointer;
-    }
-    button:hover {
-        background: #555555;
-    }
-    #response {
-        margin-top: 20px;
-        font-size: 18px;
-        color: #ffffff;
-    }
-</style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #000000;
+            color: white;
+        }
+
+        #box {
+            max-width: 600px;
+            margin: auto;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+
+        input {
+            width: 80%;
+            padding: 10px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+        }
+
+        button {
+            padding: 10px;
+            background: #444;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        #response {
+            margin-top: 20px;
+            white-space: pre-line;
+            font-size: 18px;
+        }
+    </style>
 
 </head>
 
 <body>
+
 <div id="box">
+
     <h2>🤖 School Chatbot</h2>
 
-    <input id="userInput" placeholder="Ask me something..." />
-    <button onclick="sendMessage()">Send</button>
+    <input
+        id="userInput"
+        placeholder="Ask me something..."
+    >
+
+    <button onclick="sendMessage()">
+        Send
+    </button>
 
     <p id="response"></p>
+
 </div>
 
 <script>
+
 function sendMessage() {
+
     let message = document.getElementById("userInput").value;
 
     fetch("/ask", {
+
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({question: message})
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            question: message
+        })
+
     })
-    .then(res => res.json())
+
+    .then(response => response.json())
+
     .then(data => {
-        document.getElementById("response").innerText = data.answer;
-    })
+
+        document.getElementById("response").innerText =
+            data.answer + "\n\n" + data.time + " s";
+
+    });
+
 }
+
 </script>
+
 </body>
 </html>
