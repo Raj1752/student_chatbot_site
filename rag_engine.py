@@ -5,8 +5,6 @@ from huggingface_hub import hf_hub_download
 from tokenizers import Tokenizer
 import onnxruntime as ort
 
-
-# ---- Load lightweight ONNX model ----
 print("Downloading lightweight model...")
 
 model_path = hf_hub_download(
@@ -25,7 +23,6 @@ tokenizer.enable_truncation(max_length=256)
 session = ort.InferenceSession(model_path)
 
 
-# ---- Create embeddings ----
 def embed(texts):
     vectors = []
 
@@ -33,11 +30,7 @@ def embed(texts):
         enc = tokenizer.encode(text)
 
         input_ids = np.array([enc.ids], dtype=np.int64)
-        attention_mask = np.array(
-            [enc.attention_mask],
-            dtype=np.int64
-        )
-
+        attention_mask = np.array([enc.attention_mask], dtype=np.int64)
         token_type_ids = np.zeros_like(input_ids)
 
         outputs = session.run(
@@ -45,19 +38,16 @@ def embed(texts):
             {
                 "input_ids": input_ids,
                 "attention_mask": attention_mask,
-                "token_type_ids": token_type_ids
-            }
+                "token_type_ids": token_type_ids,
+            },
         )
 
         token_embeddings = outputs[0][0]
         mask = attention_mask[0][:, None]
 
-        vector = (
-            token_embeddings * mask
-        ).sum(axis=0) / mask.sum()
+        vector = (token_embeddings * mask).sum(axis=0) / mask.sum()
 
         norm = np.linalg.norm(vector)
-
         if norm != 0:
             vector = vector / norm
 
@@ -66,7 +56,6 @@ def embed(texts):
     return np.array(vectors)
 
 
-# ---- Read PDF ----
 def load_pdf_text(path="university_docs.pdf"):
     text = ""
 
@@ -80,7 +69,6 @@ def load_pdf_text(path="university_docs.pdf"):
     return text
 
 
-# ---- Split PDF into sections ----
 def chunk_text(text):
     chunks = []
     current_chunk = []
@@ -106,56 +94,55 @@ def chunk_text(text):
     return chunks
 
 
-# ---- Build index ----
 print("Loading handbook and building index...")
 
 raw_text = load_pdf_text()
 chunks = chunk_text(raw_text)
+
 chunk_vectors = embed(chunks)
 
-THRESHOLD = 0.60
+THRESHOLD = 0.45
 
 
-# ---- Answer question ----
 def get_rag_response(user_input):
+
     if not user_input.strip():
         return "Please enter a question."
 
     question_vector = embed([user_input])[0]
 
-    chunk_scores = np.dot(
-        chunk_vectors,
+    chunk_scores = np.dot(chunk_vectors, question_vector)
+
+    top_indices = np.argsort(chunk_scores)[-3:][::-1]
+
+    if chunk_scores[top_indices[0]] < THRESHOLD:
+        return (
+            "I couldn't find that in the university documents. "
+            "Please contact the student support office."
+        )
+
+    candidate_sentences = []
+
+    for index in top_indices:
+
+        sentences = re.split(
+            r"(?<=[.!?])\s+",
+            chunks[index]
+        )
+
+        for sentence in sentences:
+            sentence = sentence.strip()
+
+            if sentence:
+                candidate_sentences.append(sentence)
+
+    sentence_vectors = embed(candidate_sentences)
+
+    sentence_scores = np.dot(
+        sentence_vectors,
         question_vector
     )
 
-    best_chunk = int(np.argmax(chunk_scores))
+    best_sentence = int(np.argmax(sentence_scores))
 
-    if chunk_scores[best_chunk] >= THRESHOLD:
-        sentences = re.split(
-            r"(?<=[.!?])\s+",
-            chunks[best_chunk]
-        )
-
-        sentences = [
-            sentence.strip()
-            for sentence in sentences
-            if sentence.strip()
-        ]
-
-        sentence_vectors = embed(sentences)
-
-        sentence_scores = np.dot(
-            sentence_vectors,
-            question_vector
-        )
-
-        best_sentence = int(
-            np.argmax(sentence_scores)
-        )
-
-        return sentences[best_sentence]
-
-    return (
-        "I couldn't find that in the university documents. "
-        "Please contact the student support office."
-    )
+    return candidate_sentences[best_sentence]
