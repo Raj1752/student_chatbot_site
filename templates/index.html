@@ -43,7 +43,7 @@
         #response {
             margin-top: 20px;
             white-space: pre-line;
-            font-size: 10px;
+            font-size: 14px;
         }
     </style>
 
@@ -92,8 +92,8 @@ function sendMessage() {
 
     .then(data => {
 
-        document.getElementById("response").innerText =
-            data.answer + "\n\n" + data.time + " s";
+        document.getElementById("response").innerHTML =
+    data.answer + "<br><small>" + data.time + " s</small>";
 
     });
 
