@@ -31,7 +31,10 @@ def embed(texts):
         enc = tokenizer.encode(text)
 
         input_ids = np.array([enc.ids], dtype=np.int64)
-        attention_mask = np.array([enc.attention_mask], dtype=np.int64)
+        attention_mask = np.array(
+            [enc.attention_mask],
+            dtype=np.int64
+        )
         token_type_ids = np.zeros_like(input_ids)
 
         outputs = session.run(
@@ -46,7 +49,9 @@ def embed(texts):
         token_embeddings = outputs[0][0]
         mask = attention_mask[0][:, None]
 
-        vector = (token_embeddings * mask).sum(axis=0) / mask.sum()
+        vector = (
+            token_embeddings * mask
+        ).sum(axis=0) / mask.sum()
 
         norm = np.linalg.norm(vector)
 
@@ -109,11 +114,17 @@ def get_rag_response(user_input):
     if not user_input.strip():
         return "Please enter a question."
 
+    question = user_input.lower()
     question_vector = embed([user_input])[0]
 
-    chunk_scores = np.dot(chunk_vectors, question_vector)
+    chunk_scores = np.dot(
+        chunk_vectors,
+        question_vector
+    )
 
-    top_indices = np.argsort(chunk_scores)[-3:][::-1]
+    top_indices = np.argsort(
+        chunk_scores
+    )[-3:][::-1]
 
     if chunk_scores[top_indices[0]] < THRESHOLD:
         return (
@@ -134,6 +145,38 @@ def get_rag_response(user_input):
 
             if sentence:
                 candidate_sentences.append(sentence)
+
+    candidate_text = " ".join(candidate_sentences)
+
+    # Return only the Semester 1 answer
+    if "semester 1" in question:
+        match = re.search(
+            r"Semester 1 examinations take place in ([A-Za-z]+)",
+            candidate_text,
+            re.IGNORECASE
+        )
+
+        if match:
+            month = match.group(1)
+            return (
+                "Semester 1 examinations "
+                f"take place in {month}."
+            )
+
+    # Return only the Semester 2 answer
+    if "semester 2" in question:
+        match = re.search(
+            r"Semester 2 examinations take place in ([A-Za-z]+)",
+            candidate_text,
+            re.IGNORECASE
+        )
+
+        if match:
+            month = match.group(1)
+            return (
+                "Semester 2 examinations "
+                f"take place in {month}."
+            )
 
     sentence_vectors = embed(candidate_sentences)
 
@@ -157,6 +200,8 @@ def get_rag_response(user_input):
             if word in text:
                 sentence_scores[i] += 0.05
 
-    best_sentence = int(np.argmax(sentence_scores))
+    best_sentence = int(
+        np.argmax(sentence_scores)
+    )
 
     return candidate_sentences[best_sentence]
